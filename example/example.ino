@@ -13,9 +13,9 @@ void setup() {
                           // You can set diffent pins, see fds132text.h for the arguments
     initialiseLetters() ; // I haven't figured out the smart way to set all the letter variables to the value I want yet.
 
-    mainScreen.addString("I love the arduino",0); // Add a string beginning at address 0 (the start of the screen)
-    changeThisString = mainScreen.addString("a lot",90); // This one will start at the start of line 2
-    mainScreen.addString("-- Bart",225); // And this halfway through the third line
+    mainScreen.addString("hello  world!",0); // Add a string beginning at address 0 (the start of the screen)
+    changeThisString = mainScreen.addString("esp32 fds132",100); // This one will start at the start of line 2
+    mainScreen.addString("-- raboof",225); // And this halfway through the third line
 
     //We also want a smiley
     // We already declared mySmiley globally, so it wouldn't cease to exist after the setup is gone
@@ -31,16 +31,15 @@ void setup() {
     mySmiley.width=7;
 
 
-    mainScreen.addString(&mySmiley,155); //We have to pass the address of mySmiley, not mySmiley itself
+    mainScreen.addString(&mySmiley,165); //We have to pass the address of mySmiley, not mySmiley itself
 
     mainScreen.update();
 }  
 void loop()  
 {  
     mainScreen.display();
-    if (millis()>10000){
-        changeThisString -> set("More then ever");
-        mainScreen.update(); // if you don't update no new output buffer is calculated
-    }   
+    //if (millis()>10000){
+    //    changeThisString -> set("More than ever");
+    //    mainScreen.update(); // if you don't update no new output buffer is calculated
+    //}   
 }  
-

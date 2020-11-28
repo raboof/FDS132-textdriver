@@ -1,3 +1,5 @@
+#include "Arduino.h"
+
 #include "fds132text.h"
 
 fdsScreen::fdsScreen(){
@@ -6,7 +8,12 @@ fdsScreen::fdsScreen(){
 
 void fdsScreen::setPins(){
     // using the defaults from the example setup
-    setPins(10,13,11,7,6,5,9,2000);
+    //setPins(10,13,11,7,6,5,9,2000);
+    
+    // Apparently we want the GPIO numbers not the 'pin numbers'.
+    // With a static framebuffer a delay of 600 is stable, 650 slightly flickers
+    // low numbers (<200) lead to ghosting and less brightness
+    setPins(12,14,13,33,25,26,27,500);
 }
 
 void fdsScreen::setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_row_c, int p_row_b, int p_row_a, int p_resredPin, int p_delay){
@@ -27,7 +34,7 @@ void fdsScreen::setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_ro
     pinMode (resredPin, OUTPUT);  
     digitalWrite (resredPin, HIGH);
     digitalWrite (strobePin, LOW); 
-    SPI.begin();  // start the SPI library
+    SPI.begin(clockPin, -1, dataPin);  // start the SPI library
     SPI.setBitOrder(MSBFIRST);  //Code was written for this bit Order
 }
 
@@ -180,13 +187,14 @@ void fdsScreen::zeroDisplay() //Clear the display
 }  
 
 void fdsScreen::display() //Display the current fdsScreen::output array
-{                           
+{          
+                     
     for (int row=0; row<7; row++) // The screen can only display one line at a time,
                                   // We can make it look like it can write them all by writing quickly
                  
     {   
         digitalWrite(strobePin, LOW);    // strobePin LOW so the LEDs don't change when we send the bits.
-        digitalWrite (resredPin, LOW);   // dim the display to prevent ghosting.  
+        digitalWrite(resredPin, LOW);   // dim the display to prevent ghosting.  
         setRow(row);
         for(int i=34; i>=0; i--){
             SPI.transfer(output[row][i]);
@@ -244,4 +252,3 @@ void fdsStringNode::setEnd(){
     next = NULL;
 
 }
-
