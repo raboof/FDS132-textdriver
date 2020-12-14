@@ -6,14 +6,14 @@ fdsScreen::fdsScreen(){
     first = NULL; //make sure it's a null pointer
 }
 
-void fdsScreen::setPins(){
+// With a static framebuffer a delay of 600 is stable, 650 slightly flickers
+// low numbers (<200) lead to ghosting and less brightness
+void fdsScreen::setPins(int delay){
     // using the defaults from the example setup
     //setPins(10,13,11,7,6,5,9,2000);
     
     // Apparently we want the GPIO numbers not the 'pin numbers'.
-    // With a static framebuffer a delay of 600 is stable, 650 slightly flickers
-    // low numbers (<200) lead to ghosting and less brightness
-    setPins(12,14,13,33,25,26,27,500);
+    setPins(12,14,13,33,25,26,27,delay);
 }
 
 void fdsScreen::setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_row_c, int p_row_b, int p_row_a, int p_resredPin, int p_delay){
@@ -180,7 +180,7 @@ void fdsScreen::updateFromfdsStringNode(fdsStringNode *current, int currentbit, 
 
 void fdsScreen::zeroDisplay() //Clear the display
 {                           
-    for(int i=0; i<34; i++)  
+    for(int i=0; i<=34; i++)  
     {  
         SPI.transfer(0);    
     }  

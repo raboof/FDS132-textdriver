@@ -66,7 +66,7 @@ class fdsScreen {
     fdsString* addString(char initialValue[], int position);
     fdsString* addString(fdsChar * value, int position);
     // Set the pins using the default values (and do some other initialisation stuff)
-    void setPins();
+    void setPins(int p_delay);
     // Set the pins using custom values
     void setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_row_c, int p_row_b, int p_row_a, int p_resredPin, int p_delay);
     // If you have changed the text of one of the strings, you need to update it before it will get displayed
