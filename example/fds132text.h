@@ -99,5 +99,6 @@ class fdsScreen {
     void drawPixel(int x, int y, int color);
     void drawChar(int x, int y, fdsChar* c, int color);
     void drawString(int x, int y, char* string, int color);
+    void fillScreen(int color);
 };
 #endif

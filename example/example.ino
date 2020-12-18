@@ -101,13 +101,41 @@ void loop()
     Serial.print(duration, DEC);
   }
 
-  screen_n = (screen_n + 1) % n_frames;
-    
   portENTER_CRITICAL(&timerMux);
   currentScreen = mainScreen[screen_n];
   portEXIT_CRITICAL(&timerMux);
 
-  delayMicroseconds(100000);
+  screen_n = (screen_n + 1) % n_frames;
+
+  mainScreen[screen_n].fillScreen(BLACK);
+  //mainScreen[screen_n].drawPixel(t % 90, t % (3*7), WHITE);
+  //mainScreen[screen_n].drawPixel((t/2) % 90, (t*2) % (3*7), WHITE);
+  
+  /* plasma:
+  for (int x = 0; x < 90; x++) {
+    for (int y = 0; y < 3*7; y++) {
+      double v = (sin(x / 2.4) + sin(y * y / 3) + sin(t)) / 3;
+      int color;
+      if (v < -0.5) {
+        color = BLACK;
+      } else if (v < 0) {
+        color = DARKER;
+      } else if (v < 0.5) {
+        color = LIGHTER;
+      } else {
+        color = WHITE;
+      }
+         
+      mainScreen[screen_n].drawPixel(x, y, color);
+    }
+  }
+  */
+  
+  
+
+  mainScreen[screen_n].drawString((t/5) % 50, (t/6) % 14, "hack42", WHITE);
+  
+  delayMicroseconds(5000);
   t++;
   /*
   // 3 shades of 'grey':

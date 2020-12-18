@@ -144,10 +144,20 @@ void fdsScreen::drawChar(int x, int y, fdsChar* c, int color) {
   }
 }
 
+void fdsScreen::fillScreen(int color) {
+  memset(output_white, color == WHITE ? 0b11111111 : 0, sizeof(output_white[0][0]) * 35 * 7);
+  memset(output_lighter, (color == WHITE || color == DARKER) ? 0b11111111 : 0, sizeof(output_lighter[0][0]) * 35 * 7);
+  memset(output_darker, color != BLACK ? 0b11111111 : 0, sizeof(output_darker[0][0]) * 35 * 7);
+}
+
 void fdsScreen::drawPixel(int x, int y, int color) {
   // we could optimize by unrolling the % and / operations because we know it's just 3 columns.
   int row = y % 7;
   int col = 271 - (x + (y / 7) * 90);
+
+  output_white[row][col/8] = output_white[row][col/8] & ~(1 << (col % 8));
+  output_lighter[row][col/8] = output_lighter[row][col/8] & ~(1 << (col % 8));
+  output_darker[row][col/8] = output_darker[row][col/8] & ~(1 << (col % 8));
 
   switch(color) {
     case WHITE:
@@ -196,7 +206,6 @@ void fdsScreen::updateFromfdsStringNode(fdsStringNode *current, int currentbit, 
         // Make sure the byte after the endbit is empty
         output[row][(endbit/8)+1] = 0;
         output[row][endbit/8] = output[row][endbit/8] & (B11111111 >> (8 - (endbit % 8)));
-    
     }
 
 
@@ -218,11 +227,6 @@ void fdsScreen::setRow (int row)
     digitalWrite (row_b, row & 2);
     digitalWrite (row_c, row & 4);
 }  
-
-// Notes:
-// - doing SPI.transfer while the previous line is being written (move resred+setrow down)
-// - transfer -> writeBytes
-// - maybe then we can get away with 2 buffers for 3 grayscale values again?
 
 void fdsScreen::displayRow(int row, int delay, byte* p_output)
 {
