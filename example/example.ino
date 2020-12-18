@@ -7,10 +7,26 @@ Thanks to Rudi Imbrechts (http://arduinows.blogspot.nl/) for the initial example
 #define n_frames 4
 fdsScreen mainScreen[n_frames];
 
+fdsScreen currentScreen;
+
 fdsString *changeThisString;
 
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+hw_timer_t * timer = NULL;
+
 fdsChar mySmiley;
-void setup() { 
+
+void IRAM_ATTR onTimer() {
+  portENTER_CRITICAL(&timerMux);
+  fdsScreen screen = currentScreen;
+  portEXIT_CRITICAL(&timerMux);
+  screen.display();
+}
+
+void setup() {
+
+    
+  
     //Serial.begin(9600);
     Serial.begin(115200);
   
@@ -57,9 +73,18 @@ void setup() {
     //mainScreen[0].drawString(0, 0, "hello world!", WHITE);
     //mainScreen[0].drawString(0, 7, "esp32 fds132", LIGHTER);
     //mainScreen[0].drawString(0, 14, "faster grayscale", DARKER);
+    currentScreen = mainScreen[0];
+
+    timer = timerBegin(0, 65536, true);
+    timerAttachInterrupt(timer, &onTimer, true);
+    timerAlarmWrite(timer, 18, true);
+    timerAlarmEnable(timer);
 }  
 
+
 int t = 0;
+
+int screen_n = 0;
 
 int start;
 
@@ -75,6 +100,14 @@ void loop()
     Serial.print(duration, DEC);
   }
 
+  //screen_n = (screen_n + 1) % n_frames;
+    
+  portENTER_CRITICAL(&timerMux);
+  currentScreen = mainScreen[screen_n];
+  portEXIT_CRITICAL(&timerMux);
+
+  delayMicroseconds(100000);
+  t++;
   /*
   // 3 shades of 'grey':
   int f = (t / 3) % n_frames;
@@ -84,9 +117,8 @@ void loop()
   */
   
   //mainScreen[0].drawPixel((t/20) % 300, 5, WHITE);
-  mainScreen[0].display();
+  //mainScreen[0].display();
   //delayMicroseconds(1000);
-  t++;
     
     //int line = t % ((34*8)/3);
     //for (int row=0; row<7; row++) {
