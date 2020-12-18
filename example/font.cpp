@@ -59,13 +59,13 @@ void initialiseLetters(){
     fdsCharA.character_map[6]=0b00001001;
     fdsCharA.width=5;
 
-    fdsCharB.character_map[0]=0b00000111;
+    fdsCharB.character_map[0]=0b10000111;
     fdsCharB.character_map[1]=0b00001001; 
     fdsCharB.character_map[2]=0b00001001; 
     fdsCharB.character_map[3]=0b00000111; 
     fdsCharB.character_map[4]=0b00001001; 
     fdsCharB.character_map[5]=0b00001001; 
-    fdsCharB.character_map[6]=0b00000111;
+    fdsCharB.character_map[6]=0b10000111;
     fdsCharB.width=5;
 
     fdsCharC.character_map[0]=0b00000110;

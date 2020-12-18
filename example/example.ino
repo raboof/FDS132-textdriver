@@ -13,6 +13,8 @@ fdsString *changeThisString;
 
 fdsChar mySmiley;
 void setup() { 
+    //Serial.begin(9600);
+    Serial.begin(115200);
   
     for (int f = 0; f < n_frames; f++) {
     mainScreen[f][0].setPins(150); // Uses the default from Rudi Imbrechts guide on how to set up the pins.
@@ -75,27 +77,55 @@ void setup() {
     mainScreen[f][1].update();
     mainScreen[f][2].update();
     }
+    Serial.print("start");
+    memset(mainScreen[0][0].output, 0, sizeof(mainScreen[0][0].output[0][0]) * 35 * 7);
+    fdsChar* h = charTofdsChar('h');
+    fdsChar* e = charTofdsChar('e');
+    //mainScreen[0][0].drawChar(0, 0, h, WHITE);
+    //mainScreen[0][0].drawChar(h->width, 0, e, WHITE);
+    mainScreen[0][0].drawString(0, 0, "hello world!", WHITE);
 }  
 
 int t = 0;
 
+int start;
+
 void loop()  
 { 
+  /*
+  if (t == 0) {
+    start = micros();
+  }
+  if (t == 1000) {
+    int duration = micros() - start;
+    Serial.print("t = 1000, elapsed:");
+    Serial.print(duration, DEC);
+  }
+  // 
+  
+  // 3 shades of 'grey':
   int f = (t / 20) % n_frames;
   for (int i = 0; i < 3; i++) {
     mainScreen[f][i].display();
   }
+  */
+  mainScreen[0][0].drawPixel((t/20) % 300, 5, WHITE);
+  mainScreen[0][0].display();
   t++;
+
+
   
     
     //int line = t % ((34*8)/3);
     //for (int row=0; row<7; row++) {
     //  for(int i=34/3; i>=0; i--) {
-    //    mainScreen.output[row][i] = (i == (line / 8)) << (line % 8);
-    //    mainScreen.output[row][i+((34)/3)] = (i == (line / 8)) << (line % 8);
-    //    mainScreen.output[row][i+(2*(34)/3)] = (i == (line / 8)) << (line % 8);
+    //    mainScreen[0][0].output[row][i] = (i == (line / 8)) << (line % 8);
+    //    mainScreen[0][0].output[row][i+((34)/3)] = (i == (line / 8)) << (line % 8);
+    //    mainScreen[0][0].output[row][i+(2*(34)/3)] = (i == (line / 8)) << (line % 8);
     //  }
     //}
+    //mainScreen[0][0].display();
+    
     //mainScreen.addString("x", (millis()/100) % 250);
     //mainScreen.update();
     

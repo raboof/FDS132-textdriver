@@ -6,6 +6,8 @@ fdsScreen::fdsScreen(){
     first = NULL; //make sure it's a null pointer
 }
 
+#define FDS132_ROWS 7
+
 // With a static framebuffer a delay of 600 is stable, 650 slightly flickers
 // low numbers (<200) lead to ghosting and less brightness
 void fdsScreen::setPins(int delay){
@@ -35,7 +37,7 @@ void fdsScreen::setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_ro
     digitalWrite (resredPin, HIGH);
     digitalWrite (strobePin, LOW); 
     SPI.begin(clockPin, -1, dataPin);  // start the SPI library
-    SPI.setBitOrder(MSBFIRST);  //Code was written for this bit Order
+    SPI.setBitOrder(LSBFIRST);
 }
 
 // Takes a C-style string and puts it in the list of fdsStrings
@@ -138,6 +140,39 @@ void fdsScreen::update() {
 
 }
 
+void fdsScreen::drawString(int x, int y, char* string, int color) {
+  for (char* current = string; *current != NULL; current++) {
+    fdsChar* ch = charTofdsChar(*current);
+    drawChar(x, y, ch, color);
+    x += ch->width;
+  }
+}
+
+void fdsScreen::drawChar(int x, int y, fdsChar* c, int color) {
+  for (int r = 0; r < 7; r++) {
+    // TODO get fancy blitting more of the char at once
+    for (int i = 0; i < c->width; i++) {
+      if (c->character_map[r] & (1 << i)) {
+        drawPixel(x + i, y + r, color);
+      }
+    }
+  }
+}
+
+void fdsScreen::drawPixel(int x, int y, int color) {
+  // we could optimize by unrolling the % and / operations because we know it's just 3 columns.
+  if (color == WHITE) {
+    int row = y % 7;
+    int col = 271 - (x + (y / 7) * 90);
+    output[row][col/8] = output[row][col/8] | (1 << (col % 8));
+  }
+  //output[5][5] = 1;
+  //output[5][6] = 1;
+  //output[5][7] = 1;
+  
+}
+
+
 void fdsScreen::updateFromfdsStringNode(fdsStringNode *current, int currentbit, int endbit){
     fdsChar *currentValue = 0; // Pointer to the Character object current is pointing to.
     byte b; //The bits that we are currently inserting into the array.
@@ -186,26 +221,6 @@ void fdsScreen::zeroDisplay() //Clear the display
     }  
 }  
 
-void fdsScreen::display() //Display the current fdsScreen::output array
-{          
-                     
-    for (int row=0; row<7; row++) // The screen can only display one line at a time,
-                                  // We can make it look like it can write them all by writing quickly
-                 
-    {   
-        digitalWrite(strobePin, LOW);    // strobePin LOW so the LEDs don't change when we send the bits.
-        digitalWrite(resredPin, LOW);   // dim the display to prevent ghosting.  
-        setRow(row);
-        for(int i=34; i>=0; i--){
-            SPI.transfer(output[row][i]);
-        };
-        digitalWrite(strobePin, HIGH);   // update the shiftregisters.  
-        digitalWrite (resredPin, HIGH);  // turn the display back on.  
-        delayMicroseconds(delay);         // pause, because otherwise it will update too quickly
-    }
-
-}  
-
 // The LED screen only shows 1 (out of 7) rows at a time. This activates the row
 // (The full screen is shown by quickly alternating between these)
 void fdsScreen::setRow (int row)
@@ -214,6 +229,40 @@ void fdsScreen::setRow (int row)
     digitalWrite (row_b, row & 2);
     digitalWrite (row_c, row & 4);
 }  
+
+// Notes:
+// - doing SPI.transfer while the previous line is being written (move resred+setrow down)
+// - transfer -> writeBytes
+// - maybe then we can get away with 2 buffers for 3 grayscale values again?
+
+void fdsScreen::displayRow(int row)
+{
+  digitalWrite(strobePin, LOW);    // strobePin LOW so the LEDs don't change when we send the bits.
+  // TODO if we lay out our 'output' buffers correctly (or perhaps initialize SPI differently?)
+  // we can use writeBytes to write almost twice as fast: 
+  SPI.writeBytes(output[row], 34);
+  //for(int i=34; i>=0; i--){
+  //    SPI.transfer(output[row][i]);
+  //};
+  digitalWrite(resredPin, LOW);   // dim the display to prevent ghosting.  
+  setRow(row);
+  digitalWrite(strobePin, HIGH);   // update the shiftregisters.  
+  digitalWrite(resredPin, HIGH);  // turn the display back on.  
+  delayMicroseconds(delay);         // pause, because otherwise it will update too quickly
+}
+
+void fdsScreen::display() //Display the current fdsScreen::output array
+{   
+    // scramble the order to avoid showing 'diagonals'       
+    displayRow(5);
+    displayRow(0);
+    displayRow(3);
+    displayRow(1);
+    displayRow(6);
+    displayRow(4);
+    displayRow(2);
+}
+
 
 // Set the value of this node to the first character in the array
 // Then do the rest of the nodes recursively

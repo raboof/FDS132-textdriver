@@ -5,6 +5,12 @@
 #include <SPI.h>
 #include "font.h"
 
+// 3 shades of grey
+#define BLACK 0
+#define DARKER 1
+#define LIGHTER 2
+#define WHITE 3
+
 // This is a character that our output function can use to write.
 // It has every row encoded in a byte, and we record the width of the byte
 // The width is inluding a space
@@ -75,8 +81,15 @@ class fdsScreen {
     void zeroDisplay();
     // output to the physical display
     void display();
+    // n: 0-6
+    void displayRow(int n);
+    
     // The output that will be displayed
     byte output[7][35];
 
+    // inspired by adafruit gfx
+    void drawPixel(int x, int y, int color);
+    void drawChar(int x, int y, fdsChar* c, int color);
+    void drawString(int x, int y, char* string, int color);
 };
 #endif
