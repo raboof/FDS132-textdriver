@@ -5,11 +5,9 @@ Thanks to Rudi Imbrechts (http://arduinows.blogspot.nl/) for the initial example
 #include <SPI.h>  //for some reason it only works if you include it here
 
 #define n_frames 4
-fdsScreen mainScreen[n_frames][3];
+fdsScreen mainScreen[n_frames];
 
 fdsString *changeThisString;
-
-
 
 fdsChar mySmiley;
 void setup() { 
@@ -17,46 +15,24 @@ void setup() {
     Serial.begin(115200);
   
     for (int f = 0; f < n_frames; f++) {
-    mainScreen[f][0].setPins(150); // Uses the default from Rudi Imbrechts guide on how to set up the pins.
-                          // You can set diffent pins, see fds132text.h for the arguments
-    mainScreen[f][1].setPins(80); // Uses the default from Rudi Imbrechts guide on how to set up the pins.
-                           // You can set diffent pins, see fds132text.h for the arguments
-    mainScreen[f][2].setPins(20); // Uses the default from Rudi Imbrechts guide on how to set up the pins.
-                           // You can set diffent pins, see fds132text.h for the arguments
+      mainScreen[f].setPins(0, 1500, 0);
     }
-    initialiseLetters() ; // I haven't figured out the smart way to set all the letter variables to the value I want yet.
+    initialiseLetters();
 
-    mainScreen[0][0].addString("hello  world!",0);
-    mainScreen[0][1].addString("hello  world!",0);
-    mainScreen[0][2].addString("hello  world!",0);
-    
-    mainScreen[0][1].addString("esp32 fds132",100);
-    mainScreen[0][2].addString("esp32 fds132",100);
-    
-    mainScreen[0][2].addString("-- raboof",225);
+    mainScreen[0].drawString(0, 0, "hello  world!", WHITE);
+    mainScreen[0].drawString(20, 7, "esp32 fds132", LIGHTER);
+    mainScreen[0].drawString(40, 14, "-- raboof", DARKER);
 
-//--------------
-    mainScreen[1][1].addString("hello  world!",0);
-    mainScreen[1][2].addString("hello  world!",0);
-    
-    mainScreen[1][2].addString("esp32 fds132",100);
-//--------------
-    mainScreen[2][2].addString("hello  world!",0);
-    
-    mainScreen[2][0].addString("-- raboof",225);
-    mainScreen[2][1].addString("-- raboof",225);
-    mainScreen[2][2].addString("-- raboof",225);
-//--------------
+    mainScreen[1].drawString(0, 0, "hello  world!", LIGHTER);
+    mainScreen[1].drawString(20, 7, "esp32 fds132", DARKER);
 
-    mainScreen[3][0].addString("esp32 fds132",100);
-    mainScreen[3][1].addString("esp32 fds132",100);
-    mainScreen[3][2].addString("esp32 fds132",100);
+    mainScreen[2].drawString(0, 0, "hello  world!", DARKER);
+    mainScreen[2].drawString(40, 14, "-- raboof", WHITE);
 
-    mainScreen[3][1].addString("-- raboof",225);
-    mainScreen[3][2].addString("-- raboof",225);
+    mainScreen[3].drawString(20, 7, "esp32 fds132", WHITE);
+    mainScreen[3].drawString(40, 14, "-- raboof", LIGHTER);
 
-    
-//We also want a smiley
+    //We also want a smiley
     // We already declared mySmiley globally, so it wouldn't cease to exist after the setup is gone
     // We can define it visually, and it helps if your editor lets you highlight 1
     // Note that the character starts at the left, you have to enter the mirror image
@@ -69,21 +45,18 @@ void setup() {
     mySmiley.character_map[6]=B00000000;
     mySmiley.width=7;
 
-
     //mainScreen1.addString(&mySmiley,165); //We have to pass the address of mySmiley, not mySmiley itself
 
-    for (int f = 0; f < n_frames; f++) {
-    mainScreen[f][0].update();
-    mainScreen[f][1].update();
-    mainScreen[f][2].update();
-    }
     Serial.print("start");
-    memset(mainScreen[0][0].output, 0, sizeof(mainScreen[0][0].output[0][0]) * 35 * 7);
-    fdsChar* h = charTofdsChar('h');
-    fdsChar* e = charTofdsChar('e');
+    //memset(mainScreen[0].output, 0, sizeof(mainScreen[0].output[0][0]) * 35 * 7);
+    //memset(mainScreen[0].output_lsb, 0, sizeof(mainScreen[0].output_lsb[0][0]) * 35 * 7);
+    //fdsChar* h = charTofdsChar('h');
+    //fdsChar* e = charTofdsChar('e');
     //mainScreen[0][0].drawChar(0, 0, h, WHITE);
     //mainScreen[0][0].drawChar(h->width, 0, e, WHITE);
-    mainScreen[0][0].drawString(0, 0, "hello world!", WHITE);
+    //mainScreen[0].drawString(0, 0, "hello world!", WHITE);
+    //mainScreen[0].drawString(0, 7, "esp32 fds132", LIGHTER);
+    //mainScreen[0].drawString(0, 14, "faster grayscale", DARKER);
 }  
 
 int t = 0;
@@ -92,7 +65,7 @@ int start;
 
 void loop()  
 { 
-  /*
+  
   if (t == 0) {
     start = micros();
   }
@@ -101,20 +74,19 @@ void loop()
     Serial.print("t = 1000, elapsed:");
     Serial.print(duration, DEC);
   }
-  // 
-  
+
+  /*
   // 3 shades of 'grey':
-  int f = (t / 20) % n_frames;
+  int f = (t / 3) % n_frames;
   for (int i = 0; i < 3; i++) {
-    mainScreen[f][i].display();
+    mainScreen[f].display();
   }
   */
-  mainScreen[0][0].drawPixel((t/20) % 300, 5, WHITE);
-  mainScreen[0][0].display();
-  t++;
-
-
   
+  //mainScreen[0].drawPixel((t/20) % 300, 5, WHITE);
+  mainScreen[0].display();
+  //delayMicroseconds(1000);
+  t++;
     
     //int line = t % ((34*8)/3);
     //for (int row=0; row<7; row++) {

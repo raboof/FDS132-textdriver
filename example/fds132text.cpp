@@ -8,17 +8,15 @@ fdsScreen::fdsScreen(){
 
 #define FDS132_ROWS 7
 
-// With a static framebuffer a delay of 600 is stable, 650 slightly flickers
-// low numbers (<200) lead to ghosting and less brightness
-void fdsScreen::setPins(int delay){
+void fdsScreen::setPins(int delay_white, int delay_msb, int delay_lsb){
     // using the defaults from the example setup
     //setPins(10,13,11,7,6,5,9,2000);
     
     // Apparently we want the GPIO numbers not the 'pin numbers'.
-    setPins(12,14,13,33,25,26,27,delay);
+    setPins(12,14,13,33,25,26,27,delay_white,delay_msb,delay_lsb);
 }
 
-void fdsScreen::setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_row_c, int p_row_b, int p_row_a, int p_resredPin, int p_delay){
+void fdsScreen::setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_row_c, int p_row_b, int p_row_a, int p_resredPin, int p_delay_white, int p_delay_msb, int p_delay_lsb){
     strobePin = p_strobePin;
     clockPin  = p_clockPin;
     dataPin = p_dataPin;  
@@ -26,7 +24,9 @@ void fdsScreen::setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_ro
     row_a = p_row_a;
     row_b = p_row_b;
     row_c = p_row_c;
-    delay = p_delay;
+    delay_white = p_delay_white;
+    delay_msb = p_delay_msb;
+    delay_lsb = p_delay_lsb;
     pinMode (strobePin, OUTPUT); 
     pinMode (clockPin, OUTPUT);  
     pinMode (dataPin, OUTPUT);  
@@ -38,6 +38,7 @@ void fdsScreen::setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_ro
     digitalWrite (strobePin, LOW); 
     SPI.begin(clockPin, -1, dataPin);  // start the SPI library
     SPI.setBitOrder(LSBFIRST);
+    memset(output_blank, 0, sizeof(output_blank[0]) * 35);
 }
 
 // Takes a C-style string and puts it in the list of fdsStrings
@@ -161,14 +162,16 @@ void fdsScreen::drawChar(int x, int y, fdsChar* c, int color) {
 
 void fdsScreen::drawPixel(int x, int y, int color) {
   // we could optimize by unrolling the % and / operations because we know it's just 3 columns.
-  if (color == WHITE) {
+  if (color == WHITE || color == LIGHTER) {
     int row = y % 7;
     int col = 271 - (x + (y / 7) * 90);
     output[row][col/8] = output[row][col/8] | (1 << (col % 8));
   }
-  //output[5][5] = 1;
-  //output[5][6] = 1;
-  //output[5][7] = 1;
+  if (color == WHITE || color == DARKER) {
+    int row = y % 7;
+    int col = 271 - (x + (y / 7) * 90);
+    output_lsb[row][col/8] = output_lsb[row][col/8] | (1 << (col % 8));
+  }
   
 }
 
@@ -237,13 +240,20 @@ void fdsScreen::setRow (int row)
 
 void fdsScreen::displayRow(int row)
 {
+  //if (delay_white != 0)
+  //  displayRow(row, delay_white, output[row]);
+  if (delay_msb != 0)
+    displayRow(row, delay_msb, output[row]);
+  if (delay_lsb != 0)
+    displayRow(row, delay_lsb, output_lsb[row]);
+}
+
+void fdsScreen::displayRow(int row, int delay, byte* p_output)
+{
   digitalWrite(strobePin, LOW);    // strobePin LOW so the LEDs don't change when we send the bits.
   // TODO if we lay out our 'output' buffers correctly (or perhaps initialize SPI differently?)
   // we can use writeBytes to write almost twice as fast: 
-  SPI.writeBytes(output[row], 34);
-  //for(int i=34; i>=0; i--){
-  //    SPI.transfer(output[row][i]);
-  //};
+  SPI.writeBytes(p_output, 34);
   digitalWrite(resredPin, LOW);   // dim the display to prevent ghosting.  
   setRow(row);
   digitalWrite(strobePin, HIGH);   // update the shiftregisters.  
@@ -251,16 +261,22 @@ void fdsScreen::displayRow(int row)
   delayMicroseconds(delay);         // pause, because otherwise it will update too quickly
 }
 
-void fdsScreen::display() //Display the current fdsScreen::output array
+void fdsScreen::display() {
+  display(delay_msb, output);
+  display(delay_lsb, output_lsb);
+}
+
+void fdsScreen::display(int delay, byte output[7][35]) //Display the current fdsScreen::output array
 {   
     // scramble the order to avoid showing 'diagonals'       
-    displayRow(5);
-    displayRow(0);
-    displayRow(3);
-    displayRow(1);
-    displayRow(6);
-    displayRow(4);
-    displayRow(2);
+    displayRow(5, delay, output[5]);
+    displayRow(0, delay, output[0]);
+    displayRow(3, delay, output[3]);
+    displayRow(1, delay, output[1]);
+    displayRow(6, delay, output[6]);
+    displayRow(4, delay, output[4]);
+    displayRow(2, delay, output[2]);
+    // TODO: now, wait the time it'd normally take to clock in another row, and turn off row 2.
 }
 
 

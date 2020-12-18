@@ -64,7 +64,9 @@ class fdsScreen {
     int row_a;        // Every ledmatrix has 7 rows.
     int row_b;        // The hardware used a 3-to-8 encoder
     int row_c;        // type 74HC238 (U4 in the scematics).
-    int delay;
+    int delay_white;
+    int delay_lsb;
+    int delay_msb;
   public:
     fdsScreen(); //constructor
     // Add a string at position. initialValue is a C-type string that
@@ -72,20 +74,28 @@ class fdsScreen {
     fdsString* addString(char initialValue[], int position);
     fdsString* addString(fdsChar * value, int position);
     // Set the pins using the default values (and do some other initialisation stuff)
-    void setPins(int p_delay);
+    // The extra delay when writing WHITE pixels is delay_white+delay_msb+delay_lsb
+    // The extra delay when writing LIGHTER pixels is delay_msb+delay_lsb
+    // The extra delay when writing DARKER pixels is delay_lsb
+    void setPins(int delay_white, int delay_msb, int delay_lsb);
     // Set the pins using custom values
-    void setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_row_c, int p_row_b, int p_row_a, int p_resredPin, int p_delay);
+    void setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_row_c, int p_row_b, int p_row_a, int p_resredPin, int p_delay_white, int p_delay_msb, int p_delay_lsb);
     // If you have changed the text of one of the strings, you need to update it before it will get displayed
     void update();
     // Make the display empty. This does not empty the strings and will be undone as soon as update() is called
     void zeroDisplay();
     // output to the physical display
     void display();
+    void display(int delay, byte output[7][35]);
     // n: 0-6
     void displayRow(int n);
+    void displayRow(int n, int delay, byte* output);
     
     // The output that will be displayed
     byte output[7][35];
+    // When using grayscale: the less-significant bits of the output that will be displayed:
+    byte output_lsb[7][35];
+    byte output_blank[35];
 
     // inspired by adafruit gfx
     void drawPixel(int x, int y, int color);
