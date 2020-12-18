@@ -55,7 +55,7 @@ class fdsScreen {
   private:
     fdsString *first; // The first string, it has a pointer to the next one
     void setRow(int row);
-    void updateFromfdsStringNode(fdsStringNode *current, int currentbit, int endbit);
+    void updateFromfdsStringNode(fdsStringNode *current, int currentbit, int endbit, byte output[7][35]);
     void placeString(fdsString* theString);
     int strobePin;
     int clockPin;
@@ -80,21 +80,19 @@ class fdsScreen {
     void setPins(int delay_white, int delay_msb, int delay_lsb);
     // Set the pins using custom values
     void setPins(int p_strobePin, int p_clockPin, int p_dataPin, int p_row_c, int p_row_b, int p_row_a, int p_resredPin, int p_delay_white, int p_delay_msb, int p_delay_lsb);
-    // If you have changed the text of one of the strings, you need to update it before it will get displayed
-    void update();
     // Make the display empty. This does not empty the strings and will be undone as soon as update() is called
     void zeroDisplay();
     // output to the physical display
-    void display();
+    void display(int tick);
     void display(int delay, byte output[7][35]);
     // n: 0-6
-    void displayRow(int n);
     void displayRow(int n, int delay, byte* output);
     
     // The output that will be displayed
-    byte output[7][35];
+    byte output_white[7][35];
+    byte output_lighter[7][35];
+    byte output_darker[7][35];
     // When using grayscale: the less-significant bits of the output that will be displayed:
-    byte output_lsb[7][35];
     byte output_blank[35];
 
     // inspired by adafruit gfx

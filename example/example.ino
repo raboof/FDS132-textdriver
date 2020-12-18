@@ -13,6 +13,7 @@ fdsString *changeThisString;
 
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 hw_timer_t * timer = NULL;
+int interrupt_tick = 0;
 
 fdsChar mySmiley;
 
@@ -20,18 +21,18 @@ void IRAM_ATTR onTimer() {
   portENTER_CRITICAL(&timerMux);
   fdsScreen screen = currentScreen;
   portEXIT_CRITICAL(&timerMux);
-  screen.display();
+  
+  screen.display(interrupt_tick);
+  
+  interrupt_tick++;
 }
 
 void setup() {
-
-    
-  
     //Serial.begin(9600);
     Serial.begin(115200);
   
     for (int f = 0; f < n_frames; f++) {
-      mainScreen[f].setPins(0, 1500, 0);
+      mainScreen[f].setPins(0, 0, 0);
     }
     initialiseLetters();
 
@@ -77,7 +78,7 @@ void setup() {
 
     timer = timerBegin(0, 65536, true);
     timerAttachInterrupt(timer, &onTimer, true);
-    timerAlarmWrite(timer, 18, true);
+    timerAlarmWrite(timer, 6, true);
     timerAlarmEnable(timer);
 }  
 
@@ -100,7 +101,7 @@ void loop()
     Serial.print(duration, DEC);
   }
 
-  //screen_n = (screen_n + 1) % n_frames;
+  screen_n = (screen_n + 1) % n_frames;
     
   portENTER_CRITICAL(&timerMux);
   currentScreen = mainScreen[screen_n];

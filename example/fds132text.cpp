@@ -125,22 +125,6 @@ int fdsString::nextStart(){
 
 }
 
-// Chage the output array to what's currently in the strings
-void fdsScreen::update() {
-    fdsString *current = first; // pointer to the string we are converting into our output right now
-
-    //clear the output
-    memset(output, 0, sizeof(output[0][0]) * 35 * 7);
-
-    while (current != 0){ // if we still have at least one string to go
-        // put it on the buffer starting at it's start
-        updateFromfdsStringNode(current -> firstNode, current -> startLocation, current -> nextStart());
-        current = current -> next;
-    }
-
-
-}
-
 void fdsScreen::drawString(int x, int y, char* string, int color) {
   for (char* current = string; *current != NULL; current++) {
     fdsChar* ch = charTofdsChar(*current);
@@ -162,21 +146,23 @@ void fdsScreen::drawChar(int x, int y, fdsChar* c, int color) {
 
 void fdsScreen::drawPixel(int x, int y, int color) {
   // we could optimize by unrolling the % and / operations because we know it's just 3 columns.
-  if (color == WHITE || color == LIGHTER) {
-    int row = y % 7;
-    int col = 271 - (x + (y / 7) * 90);
-    output[row][col/8] = output[row][col/8] | (1 << (col % 8));
+  int row = y % 7;
+  int col = 271 - (x + (y / 7) * 90);
+
+  switch(color) {
+    case WHITE:
+      output_white[row][col/8] = output_white[row][col/8] | (1 << (col % 8));
+      // fallthrough
+    case LIGHTER:
+      output_lighter[row][col/8] = output_lighter[row][col/8] | (1 << (col % 8));
+      // fallthrough
+    case DARKER:
+      output_darker[row][col/8] = output_darker[row][col/8] | (1 << (col % 8));
   }
-  if (color == WHITE || color == DARKER) {
-    int row = y % 7;
-    int col = 271 - (x + (y / 7) * 90);
-    output_lsb[row][col/8] = output_lsb[row][col/8] | (1 << (col % 8));
-  }
-  
 }
 
 
-void fdsScreen::updateFromfdsStringNode(fdsStringNode *current, int currentbit, int endbit){
+void fdsScreen::updateFromfdsStringNode(fdsStringNode *current, int currentbit, int endbit, byte output[7][35]){
     fdsChar *currentValue = 0; // Pointer to the Character object current is pointing to.
     byte b; //The bits that we are currently inserting into the array.
     while (true) {
@@ -238,16 +224,6 @@ void fdsScreen::setRow (int row)
 // - transfer -> writeBytes
 // - maybe then we can get away with 2 buffers for 3 grayscale values again?
 
-void fdsScreen::displayRow(int row)
-{
-  //if (delay_white != 0)
-  //  displayRow(row, delay_white, output[row]);
-  if (delay_msb != 0)
-    displayRow(row, delay_msb, output[row]);
-  if (delay_lsb != 0)
-    displayRow(row, delay_lsb, output_lsb[row]);
-}
-
 void fdsScreen::displayRow(int row, int delay, byte* p_output)
 {
   digitalWrite(strobePin, LOW);    // strobePin LOW so the LEDs don't change when we send the bits.
@@ -261,9 +237,19 @@ void fdsScreen::displayRow(int row, int delay, byte* p_output)
   delayMicroseconds(delay);         // pause, because otherwise it will update too quickly
 }
 
-void fdsScreen::display() {
-  display(delay_msb, output);
-  display(delay_lsb, output_lsb);
+void fdsScreen::display(int tick) {
+  switch (tick % 4) {
+    case 0: 
+    case 1:
+      display(0, output_white);
+      break;
+    case 2:
+      display(0, output_lighter);
+      break;
+    case 3:
+      display(0, output_darker);
+      break;
+  }
 }
 
 void fdsScreen::display(int delay, byte output[7][35]) //Display the current fdsScreen::output array
@@ -276,7 +262,9 @@ void fdsScreen::display(int delay, byte output[7][35]) //Display the current fds
     displayRow(6, delay, output[6]);
     displayRow(4, delay, output[4]);
     displayRow(2, delay, output[2]);
-    // TODO: now, wait the time it'd normally take to clock in another row, and turn off row 2.
+    // Now, wait the time it'd normally take to clock in another row, and turn off the last row.
+    // Easiest to get the timing right is to just actually do the SPI ;)
+    displayRow(0, delay, output_blank);
 }
 
 
